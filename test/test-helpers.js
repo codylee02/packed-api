@@ -737,9 +737,27 @@ function cleanTables(db) {
         pakd_list_items,
         pakd_templates,
         pakd_lists,
-        pakd_users
-        RESTART IDENTITY CASCADE`
+        pakd_users`
   );
+  
+}
+
+function makeAuthHeader(user, secret = process.env.JWT_SECRET) {
+  const token = jwt.sign({ user_id: user.id }, secret, {
+    subject: user.username,
+    algorithm: "HS256"
+  })
+  return `Bearer ${token}`
+}
+
+function seedPAKDTables(db, users, templates, templateItems, lists, listItems) {
+  return db.transaction(async trx => {
+    await seedUsers(trx, users);
+    await trx.into('pakd_templates').insert(templates)
+    await trx.into('pakd_template_items').insert(templateItems)
+    await trx.into('pakd_lists').insert(lists)
+    await trx.into('pakd_list_items').insert(listItems)
+  })
 }
 
 module.exports = {
@@ -751,5 +769,7 @@ module.exports = {
 
   makePAKDFixtures,
   seedUsers,
-  cleanTables
+  cleanTables,
+  makeAuthHeader,
+  seedPAKDTables
 };
