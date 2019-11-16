@@ -1,6 +1,6 @@
 const AuthService = require("../auth/auth-service");
 
-async function requireAuth(req, res, next) {
+function requireAuth(req, res, next) {
   const authToken = req.get("Authorization") || "";
 
   let bearerToken;
@@ -15,14 +15,12 @@ async function requireAuth(req, res, next) {
 
     AuthService.getUserWithUserName(req.app.get("db"), payload.sub)
       .then(user => {
-          console.log(payload)
         if (!user)
           return res.status(401).json({ error: "Unauthorized request" });
 
         req.user = user;
-        console.log('user:', req.user)
-        next();
         
+        next();
       })
       .catch(err => {
         console.error(err);

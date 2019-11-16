@@ -72,8 +72,9 @@ describe("Templates Endpoints", function() {
       });
     });
   });
+
   describe(`POST /api/templates`, () => {
-    beforeEach("seed tables", () => {
+    beforeEach(() =>
       helpers.seedPAKDTables(
         db,
         testUsers,
@@ -81,25 +82,57 @@ describe("Templates Endpoints", function() {
         testTemplateItems,
         testLists,
         testListItems
-      );
-    });
+      )
+    );
 
-    it(`creates a new template and responds 201 and the new template`, () => {
-      //this.retries(3);
-      const testTemplate = testTemplates[0];
-      const testUser = testUsers[0];
+    it(`creats a template, responds 201 and the new template `, () => {
+      const testUser = testUsers[1];
+
       const newTemplate = {
-        name: "Test new template"
+        name: "hello",
+        user_id: testUser.id
       };
+
       return supertest(app)
         .post("/api/templates")
-        .send(newTemplate)
         .set("Authorization", helpers.makeAuthHeader(testUser))
-        .expect(201);
-      //.expect(res.body).to.have.property('id')
+        .send(newTemplate)
+        .expect(201)
+        .expect(res => {
+          expect(res.body).to.have.property("id");
+          expect(res.body.name).to.eql(newTemplate.name);
+          expect(res.body.user_id).to.eql(newTemplate.user_id);
+          expect(res.headers.location).to.eql(`/api/templates/${res.body.id}`);
+        })
+        .expect(res =>
+          db
+            .from("pakd_templates")
+            .select("*")
+            .where({ id: res.body.id })
+            .first()
+            .then(row => {
+              expect(row.name).to.eql(newTemplate.name);
+              expect(row.user_id).to.eql(newTemplate.user_id);
+            })
+        );
     });
-    // it(`test`, () => {
+  });
 
-    // })
+  describe(`GET /api/templates/:template_id`, () => {
+    context(`Given no templates`, () => {
+      beforeEach(() => helpers.seedUsers(db, testUsers));
+
+      it(`responds with 404`, () => {
+        const templateId = "dbeb0265-6d16-4e28-8fe1-da792263a29f";
+        return supertest(app)
+          .get(`/api/templates/${templateId}`)
+          .set("Authorization", helpers.makeAuthHeader(testUsers[0]))
+          .expect(404, { error: { message: `Template doesn't exist` } });
+      });
+    });
+
+    context(`Given there are templates in the database`, () => {
+      it.skip(`if exists, returns the template items and template title`, () => {});
+    });
   });
 });
