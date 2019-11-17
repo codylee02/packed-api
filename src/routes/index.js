@@ -1,11 +1,11 @@
 const routes = require("express").Router();
 
-const authRouter = require("./auth/auth-router");
-const usersRouter = require("./routes/users/users-router");
-const templatesRouter = require("./templates/templates-router");
+const auth = require("./auth");
+const templates = require("./templates");
+const users = require("./users");
 
-routes.use("/auth", authRouter);
-routes.use("/users", usersRouter);
-routes.use("/templates", templatesRouter);
+routes.use("/auth", auth);
+routes.use("/templates", templates);
+routes.use("/users", users);
 
 module.exports = routes;
