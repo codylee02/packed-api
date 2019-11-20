@@ -1,4 +1,4 @@
-const AuthService = require("../auth/auth-service");
+const AuthService = require("../routes/auth/service");
 
 function requireAuth(req, res, next) {
   const authToken = req.get("Authorization") || "";
@@ -19,7 +19,7 @@ function requireAuth(req, res, next) {
           return res.status(401).json({ error: "Unauthorized request" });
 
         req.user = user;
-        
+
         next();
       })
       .catch(err => {

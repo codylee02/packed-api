@@ -1,150 +1,207 @@
 const express = require("express");
 const path = require("path");
 const service = require("./service");
-const { requireAuth } = require("../middleware/jwt-auth");
+const { requireAuth } = require("../../middleware/jwt-auth");
 
 const router = express.Router();
 const jsonBodyParser = express.json();
 
 router
-	.route("/")
-	.all(requireAuth)
-	.all(checkThingExists)
+  .route("/")
+  .all(requireAuth)
+  .all(checkTemplatesExist)
+  .get((req, res, next) => {
+    user_id = req.user.id;
+    service
+      .getUserTemplates(req.app.get("db"), req.user.id)
+      .then(templates => {
+        res.json(service.serializeTemplates(templates));
+        next();
+      })
+      .catch(next);
+  })
+  .post(jsonBodyParser, (req, res, next) => {
+    const { name } = req.body;
+    const newTemplate = { name };
 
-	//gets all of the templates for the user
-	.get((req, res, next) => {
-		user_id = req.user.id;
-		service
-			.getUserTemplates(req.app.get("db"), req.user.id)
-			.then(templates => {
-				res.json(templates);
-				next();
-			})
-			.catch(next);
-	})
+    for (const [key, value] of Object.entries(newTemplate))
+      if (value == null)
+        return res.status(400).json({
+          error: `Missing '${key}' in request body`
+        });
 
-	//post a new template
-	.post(requireAuth, jsonBodyParser, (req, res, next) => {
-		const { name } = req.body;
-		const newTemplate = { name };
+    newTemplate.user_id = req.user.id;
 
-		for (const [key, value] of Object.entries(newTemplate))
-			if (value == null)
-				return res.status(400).json({
-					error: `Missing '${key}' in request body`
-				});
+    service
+      .insertTemplate(req.app.get("db"), newTemplate)
+      .then(template => {
+        res
+          .status(201)
+          .location(path.posix.join(req.originalUrl, `/${template.id}`))
+          .json(service.serializeTemplate(template));
+      })
 
-		newTemplate.user_id = req.user.id;
-
-		service
-			.insertTemplate(req.app.get("db"), newTemplate)
-			.then(template => {
-				res
-					.status(201)
-					.location(path.posix.join(req.originalUrl, `/${template.id}`))
-					.json(service.serializeTemplate(template));
-			})
-
-			.catch(next);
-	});
+      .catch(next);
+  });
 
 router
-	.route("/:template_id")
-	.all(requireAuth)
-	.all(checkTemplateExists)
-	.get((req, res) => {
-		res.json(res.template);
-	})
-	.delete(requireAuth, jsonBodyParser, (req, res, next) => {
-		console.log("request params", req.params);
+  .route("/:template_id")
+  .all(requireAuth)
+  .all(checkTemplateExists)
+  .get(jsonBodyParser, (req, res, next) => {
+    const templateId = req.params.template_id;
+    const templateName = res.template.name;
 
-		service
-			.deleteTemplate(req.app.get("db"), req.params.template_id, req.user.id)
-			.then(numRowsAffected => {
-				res.status(204).end();
-			})
-			.catch(next);
-	});
-//.PATCH // EDIT TEMPLATE TITLE
+    service
+      .getTemplateItems(req.app.get("db"), templateId)
+
+      .then(templateItems => {
+        res.json(
+          service.serializeSingleTemplate({ templateName, templateItems })
+        );
+      })
+
+      .catch(next);
+  })
+  .post(jsonBodyParser, (req, res, next) => {
+    const template_id = req.params.template_id;
+    const name = req.body.name;
+    const newTemplateItem = { template_id, name };
+
+    service
+      .insertTemplateItem(req.app.get("db"), newTemplateItem)
+      .then(newItem => {
+        res.status(201).json(service.serializeTemplateItem(newItem));
+      })
+      .catch(next);
+  })
+  .delete(jsonBodyParser, (req, res, next) => {
+    service
+      .deleteTemplate(req.app.get("db"), req.params.template_id, req.user.id)
+      .then(() => {
+        res.status(204).end();
+      })
+      .catch(next);
+  })
+  .patch(jsonBodyParser, (req, res, next) => {
+    const { name } = req.body;
+    const templateUpdate = { name };
+    const userId = req.user.id;
+
+    for (const [key, value] of Object.entries(templateUpdate))
+      if (value == null)
+        return res.status(400).json({
+          error: { message: `Missing '${key}' in request body` }
+        });
+    service
+      .updateTemplate(
+        req.app.get("db"),
+        userId,
+        req.params.template_id,
+        templateUpdate
+      )
+      .then(numRowsAffected => {
+        res.status(204).end();
+      })
+      .catch(next);
+  });
 
 router
-	.route("/:template_id/template")
-	.all(requireAuth)
-	.all(checkTemplateExists)
+  .route("/:template_id/:template_item_id")
+  .all(requireAuth)
+  .all(checkTemplateItemExists)
+  .delete(jsonBodyParser, (req, res, next) => {
+    const templateItemId = req.params.template_item_id;
+    const templateId = req.params.template_id;
 
-	//get the template items for the template
-	.get(jsonBodyParser, (req, res, next) => {
-		const templateId = req.params.template_id;
+    service
+      .deleteTemplateItem(req.app.get("db"), templateItemId, templateId)
+      .then(() => {
+        res.status(204).end();
+      })
+      .catch(next);
+  })
+  .patch(jsonBodyParser, (req, res, next) => {
+    const templateItemId = req.params.template_item_id;
+    const templateId = req.params.template_id;
+    const { name } = req.body;
+    const templateItemUpdate = { name };
 
-		service
-			.getTemplateItems(req.app.get("db"), templateId)
-
-			.then(templateItems => {
-				res.json(templateItems);
-			})
-
-			.catch(next);
-	})
-
-	// //post a new template item
-	.post(jsonBodyParser, (req, res, next) => {
-		const template_id = req.params.template_id;
-		const name = req.body.name;
-		const newTemplateItem = { template_id, name };
-
-		service
-			.insertTemplateItem(req.app.get("db"), newTemplateItem)
-			.then(newItem => {
-				res.status(201).json(service.serializeTemplateItem(newItem));
-			})
-			.catch(next);
-	});
-
-// //delete a template item
-// .delete()
-
-// //edit a template item
-// .patch()
+    for (const [key, value] of Object.entries(templateItemUpdate))
+      if (value == null)
+        return res.status(400).json({
+          error: { message: `Missing '${key}' in request body` }
+        });
+    service
+      .updateTemplateItem(
+        req.app.get("db"),
+        templateId,
+        templateItemId,
+        templateItemUpdate
+      )
+      .then(numRowsAffected => {
+        res.status(204).end();
+      })
+      .catch(next);
+  });
 
 /* async/await syntax for promises */
-async function checkThingExists(req, res, next) {
-	try {
-		const thing = await service.getUserTemplates(
-			req.app.get("db"),
-			req.user.id
-		);
+async function checkTemplatesExist(req, res, next) {
+  try {
+    const template = await service.getUserTemplates(
+      req.app.get("db"),
+      req.user.id
+    );
 
-		if (!thing)
-			return res.status(404).json({
-				error: `Thing doesn't exist`
-			});
+    if (!template)
+      return res.status(404).json({
+        error: `Templates don't exist`
+      });
 
-		res.thing = thing;
-		next();
-	} catch (error) {
-		next(error);
-	}
+    res.template = template;
+    next();
+  } catch (error) {
+    next(error);
+  }
 }
 
 async function checkTemplateExists(req, res, next) {
-	try {
-		const template = await service.getUserTemplate(
-			req.app.get("db"),
-			req.params.template_id,
-			req.user.id
-		);
-		console.log("async func", template);
+  try {
+    const template = await service.getUserTemplate(
+      req.app.get("db"),
+      req.params.template_id,
+      req.user.id
+    );
 
-		if (!template)
-			return res.status(404).json({
-				error: { message: `Template doesn't exist` }
-			});
+    if (!template)
+      return res.status(404).json({
+        error: { message: `Template doesn't exist` }
+      });
 
-		res.template = template;
-		next();
-	} catch (error) {
-		next(error);
-	}
+    res.template = template;
+    next();
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function checkTemplateItemExists(req, res, next) {
+  try {
+    const templateItem = await service.getTemplateItemById(
+      req.app.get("db"),
+      req.params.template_item_id
+    );
+
+    if (!templateItem)
+      return res.status(404).json({
+        error: { message: `Template item doesn't exist` }
+      });
+
+    res.templateItem = templateItem;
+    next();
+  } catch (error) {
+    next(error);
+  }
 }
 
 module.exports = router;
