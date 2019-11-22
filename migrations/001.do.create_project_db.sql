@@ -12,28 +12,28 @@ CREATE TABLE pakd_lists (
   id uuid DEFAULT uuid_generate_v4 (),
   name TEXT NOT NULL,
   date_created TIMESTAMP NOT NULL DEFAULT now(),
-  user_id uuid REFERENCES pakd_users(id) ON DELETE CASCADE,
+  user_id uuid REFERENCES pakd_users(id) NOT NULL ON DELETE CASCADE,
   PRIMARY KEY (id)
 );
 CREATE TABLE pakd_templates (
   id uuid DEFAULT uuid_generate_v4 (),
   name TEXT NOT NULL,
   date_created TIMESTAMP NOT NULL DEFAULT now(),
-  user_id uuid REFERENCES pakd_users(id) ON DELETE CASCADE,
+  user_id uuid REFERENCES pakd_users(id) NOT NULL ON DELETE CASCADE,
   PRIMARY KEY (id)
 );
 CREATE TABLE pakd_list_items (
   id uuid DEFAULT uuid_generate_v4 (),
   name TEXT NOT NULL,
-  packed BOOLEAN DEFAULT false,
+  packed BOOLEAN DEFAULT false NOT NULL,
   date_created TIMESTAMP NOT NULL default now(),
-  list_id uuid REFERENCES pakd_lists(id) ON DELETE CASCADE,
+  list_id uuid REFERENCES pakd_lists(id) NOT NULL ON DELETE CASCADE,
   PRIMARY KEY (id)
 );
 CREATE TABLE pakd_template_items (
   id uuid DEFAULT uuid_generate_v4 (),
   name TEXT NOT NULL,
   date_created TIMESTAMP NOT NULL default now(),
-  template_id uuid REFERENCES pakd_templates(id) ON DELETE CASCADE,
+  template_id uuid REFERENCES pakd_templates(id) NOT NULL ON DELETE CASCADE,
   PRIMARY KEY (id)
 );

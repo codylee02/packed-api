@@ -1,5 +1,4 @@
 const xss = require("xss");
-//const Treeize = require('treeize');
 
 const service = {
   getById(db, id, userId) {
@@ -17,16 +16,6 @@ const service = {
       .from("pakd_templates AS templates")
       .select("templates.id", "templates.name", "templates.user_id")
       .where("templates.user_id", user_id);
-  },
-  getUserTemplate(db, id, userId) {
-    return db
-      .from("pakd_templates AS templates")
-      .select("templates.id", "templates.name", "templates.user_id")
-      .where({
-        id: id,
-        user_id: userId
-      })
-      .first();
   },
   getTemplateItems(db, templateId) {
     return db

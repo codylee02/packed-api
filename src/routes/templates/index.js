@@ -167,7 +167,7 @@ async function checkTemplatesExist(req, res, next) {
 
 async function checkTemplateExists(req, res, next) {
   try {
-    const template = await service.getUserTemplate(
+    const template = await service.getById(
       req.app.get("db"),
       req.params.template_id,
       req.user.id
