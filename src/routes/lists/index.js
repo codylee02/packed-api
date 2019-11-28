@@ -120,7 +120,7 @@ router
     const { name, packed } = req.body;
     const listItemUpdate = { name, packed };
 
-    const numberOfValues = Object.values(listItemUpdate).filter(Boolean).length;
+    const numberOfValues = Object.keys(listItemUpdate).length;
     if (numberOfValues === 0)
       return res.status(400).json({
         error: {
