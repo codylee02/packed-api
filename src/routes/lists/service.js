@@ -20,6 +20,7 @@ const service = {
   getListItems(db, listId) {
     return db
       .from("pakd_list_items AS items")
+      .orderBy('date_created', 'asc')
       .select("items.id", "items.name", "items.packed")
       .where("list_id", listId);
   },
