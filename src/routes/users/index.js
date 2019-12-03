@@ -19,14 +19,15 @@ router.post("/", jsonBodyParser, (req, res, next) => {
 	if (passwordError) return res.status(400).json({ error: passwordError });
 
 	service
-		.hasUserWithUserName(req.app.get("db"), username)
+		.hasUserWithUserName(req.app.get("db"), username.toLowerCase())
 		.then(hasUserWithUserName => {
 			if (hasUserWithUserName)
 				return res.status(400).json({ error: `Username already taken` });
 
 			return service.hashPassword(password).then(hashedPassword => {
+
 				const newUser = {
-					username,
+					username: req.body.username.toLowerCase(),
 					password: hashedPassword,
 					first_name,
 					last_name,

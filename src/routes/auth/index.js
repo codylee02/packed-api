@@ -15,7 +15,7 @@ router.post("/login", jsonBodyParser, (req, res, next) => {
 			});
 
 	service
-		.getUserWithUserName(req.app.get("db"), loginUser.username)
+		.getUserWithUserName(req.app.get("db"), loginUser.username.toLowerCase())
 		.then(dbUser => {
 			if (!dbUser)
 				return res.status(400).json({
