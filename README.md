@@ -1,11 +1,28 @@
-# PAKD server
+## PAKD server
+This server provides the database for the PAKD client.
 
-This is a server project that ties in with a React client
+## Client: 
+[PAKD client GitHub](https://github.com/codylee02/packed-app)
+
+## Tech / Framework Used:
+- Express
+- PostgreSQL
 
 ## Scripts
+- Install dev dependencies:
+```
+npm install
+```
+- Run Tests
+```
+npm test
+```
 
-Start the application `npm start`
+- Start in local dev environment
+```
+npm run dev
 
-Start nodemon for the application `npm run dev`
-
-Run the tests `npm test`
+- Deploy
+```
+npm run deploy
+```
