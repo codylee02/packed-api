@@ -120,13 +120,13 @@ router
     const { name, packed } = req.body;
     const listItemUpdate = { name, packed };
 
-    const numberOfValues = Object.keys(listItemUpdate).length;
-    if (numberOfValues === 0)
-      return res.status(400).json({
-        error: {
-          message: `Request body must contain either 'name' or 'packed'`
-        }
-      });
+    for (const [key, value] of Object.entries(listItemUpdate))
+      if (value == null)
+        return res.status(400).json({
+          error: {
+            message: `Request body must contain either 'name' or 'packed'`
+          }
+        });
     service
       .updateListItem(req.app.get("db"), listId, listItemId, listItemUpdate)
       .then(numRowsAffected => {

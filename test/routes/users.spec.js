@@ -53,7 +53,7 @@ describe("Users Endpoints", function() {
         });
       });
 
-      it(`responds 400 'Password must be longer than 8 characters' when empty password`, () => {
+      it(`responds 400 'Password must be at least 8 characters' when empty password`, () => {
         const userShortPassword = {
           username: "test username",
           password: "1234567",
@@ -63,7 +63,7 @@ describe("Users Endpoints", function() {
         return supertest(app)
           .post("/api/users")
           .send(userShortPassword)
-          .expect(400, { error: `Password must be longer than 8 characters` });
+          .expect(400, { error: `Password must be at least 8 characters` });
       });
 
       it(`responds 400 'Password must be less than 72 characters' when long password'`, () => {
